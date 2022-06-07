@@ -1,0 +1,5 @@
+
+
+# Rename this to .config, and edit for location of the real config file.
+
+config_file = /home/mst3k/gen_config.txt

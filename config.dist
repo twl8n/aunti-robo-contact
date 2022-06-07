@@ -1,0 +1,20 @@
+
+# Copy this file to a location outside the web area. Put the file name into 
+# config_file in .config. See dot_config.dist.
+
+email_log = /home/mst3k/email.log
+
+# At least 15 characters of text. Better if it is hard to guess.
+random_string = some text here
+
+# Text valid in a To: field. Must contain at least one email address.
+mail_to = mst3k@gmail.com,info@gmail.com
+
+# An email address at whatever the hostname reverse lookup resolves to.
+# gmail seems to check that the from is in the sending domain
+from = mst3k@my_hostname.com
+
+# A short prefix prepended to all subject lines.
+subject_prefix = Test mail:
+
+

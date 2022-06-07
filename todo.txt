@@ -1,0 +1,7 @@
+
+- trap more errors such as failure to find the config file
+
+- find a place to log the errors and possibly notify someone via email (?)
+
+- put more stuff into the config such as userid, home directory, sendmail path
+

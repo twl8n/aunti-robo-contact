@@ -1,0 +1,5 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>Contact Form</title></head>
+<body><form method="post" action="wmail.pl"><br>$warning<br><table border="1" cellpadding="2" cellspacing="2" width="100%"><tbody><tr><td>Your email
+address:</td><td><input value="$email1" maxlength="50" size="40" name="email1"></td></tr><tr><td>Confirm
+email address:</td><td><input value="$email2" maxlength="50" size="40" name="email2"></td></tr><tr><td>Subject:</td><td><input value="$subject" maxlength="50" size="40" name="subject"></td></tr><tr><td valign="top">Message:</td><td><textarea cols="50" rows="10" name="message">$message</textarea><br><br><input name="send" value="Preview" type="submit"></td></tr></tbody></table><br><br></form><br></body></html>
