@@ -31,46 +31,86 @@
 (defn confmap []
   (into {} (mapv split-nv (read-config))))
 
-;; return the HTML output?
-(defn send-logic [ch]
+(def warnmsg (atom ""))
+
+(defn warning [msg]
+  (swap! warnmsg str "\n" msg))
+
+(reset! warnmsg "")
+
+(defn confirm [config ch]
+  (str/replace (:out (shell/sh "echo" (:random_string config) (:message ch) "|" "/usr/bin/md5sum"))
+               #"\s+(.*)"
+               ""))
+
+;; Return cf, modified with a :template value
+;; Might better be called determint-template-name
+(defn send-logic [ch cf]
   (if (and (empty? @warning) (seq (:send ch)))
-    (if (= "Preview" (:send ch))
-      (do
-        
-        )
-  )
+    (cond (= "Preview" (:send ch))
+          (assoc cf :confirm (confirm ch) :template "wmail_2.html")
+          (= "Edit" (:send ch))
+          (assoc cf :template "wmail_1.html")
+          (= "Send" (:send ch))
+          (assoc cf :template "wmail_thanks.html"))
+    (assoc cf :template "wmail_1.html")))
+
+;; Side effecty. Log the message, and call sendmail.
+(defn send [ch cf]
+  (let [full-msg (str (format "To: %s\n" (:mail_to ch))
+                      (format "X-remote-addr: %s\n" (:REMOTE_ADDR ch)) ;; $ENV{REMOTE_ADDR}
+                      (format "X-user-agent: %s\n" (:HTTP_USER_AGENT ch)) ;; $ENV{HTTP_USER_AGENT}
+                      (format "From: %s\n" (:from cf))
+                      (format "Reply-To: %s\n" (:email1 ch))
+                      (format "Subject: %s %s\n\n" (:subject_prefix cf) (:subject ch))
+                      (format "%s\n" (:message ch)))]
+    ;; log the message
+    ;; call sendmail
+  ))
 
 ;; returns ch, either unchanged, or with a new :send value
-(defn check-and-confirm [ch]
+(defn check-and-confirm [ch cf]
   (when (= (:send ch) "Send")
     (let [testc (confirm ch)]
       (if (= testc (:confirm ch))
-        (check-and-send ch)
+        (do
+          (send ch cf)
+          ch)
         (do
           (warning "Please check your message.")
           (assoc ch :send "Edit"))))))
 
+;; Deep in the past,  #"\\([0-9]{3})" was replaced by the actual octal character.
+;; There was probably some character I wanted to subsutite in HTML. Dunno why.
+;; Order of the merge is important. cf-final (config read locally) must be last so it's keys
+;; override any duplicates in ch (http params). 
+(defn template [ch-final cf-final]
+  (let [cx (merge ch-final cf-final)]
+  (str/replace (slurp (:template cx))
+               #"(?<!\\)\$([\w\d]+)(?!=\w)(?!=\d)(?!=\z)"
+               #((keyword (%1 2)) cx))))
+
+
+;; Keep ch (http params) separate from cf (config values) so that http params can't easily overwrite
+;; internal config.
 (defn main []
   ;; need to part CGI params
   ;; truncate everything to avoid buffer overflow attacks
   (let [params {}
         ch {:email1 (sanitize (:email1 params))
-            :email2 (sanitize (:email2 params))
-            :subject (sanitize (:subject params))
-            :message (str/replace (:message params) #"\s+\Z" "")
-            :send (:send params) ;; why aren't we cleaning this?
-            :confirm (:confirm params) ;; ditto
-            }]
+             :email2 (sanitize (:email2 params))
+             :subject (sanitize (:subject params))
+             :message (str/replace (:message params) #"\s+\Z" "")
+             :send (:send params) ;; why not clean this?
+             :confirm (:confirm params)} ;; why not clean this?
+        cf (confmap)]
     (when (seq (:send ch))
       (if (empty? (:email1 ch))
         (warning "Missing email. You must enter your email address so we can reply to you.")
         (when (!= (:email1 ch) (:email2 ch))
           (warning "Email addresses don't match."))))
-    (let [chout (check-and-confirm ch)
-          alltxt (send-logic chout)]
-      (printf "Content-Type: text/html; charset=iso-8859-1\n\n%s\n" (template alltxt))
+    (let [ch-final (check-and-confirm ch cf)
+          cf-final (send-logic ch-final cf)]
+      (printf "Content-Type: text/html; charset=iso-8859-1\n\n%s\n" (template ch-final cf-final))
       )))
 
-(comment
-
-  )
