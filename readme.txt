@@ -1,6 +1,8 @@
 
 
-feb 24 2010
+2022-06-08
+
+Creating a Clojure version, probably intended to work with Babashka.
 
 New read_config() calls read_config_core() so that the name of the
 config file is read from local .config and the real config is not in a
