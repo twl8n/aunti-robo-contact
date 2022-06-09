@@ -65,8 +65,27 @@
                       (format "Subject: %s %s\n\n" (:subject_prefix cf) (:subject ch))
                       (format "%s\n" (:message ch)))]
     ;; log the message
+    (spit (:email_log cf) full-msg :append true)
     ;; call sendmail
+    
   ))
+(comment
+  ;; works 
+  (shell/sh "sh" "-c" "tail readme.txt | cat > tmp.txt")
+
+  ;; doesn't work?
+  require '[babashka.process :refer [process check sh pipeline pb]])
+  (mapv :out (pipeline (pb '[ls]) (pb '[cat])))
+  (-> (pipeline (pb ["ls"]) (pb ["cat"])) last :out slurp)
+  
+  (pipeline (pb '[tail "readme.txt"])
+            (pb '[cat > tmp.txt]))
+
+  (pipeline (pb '[tail -f "readme.txt"])
+            (pb '[cat])
+            (pb '[grep "5"] {:out :inherit}))
+  
+  )
 
 ;; returns ch, either unchanged, or with a new :send value
 (defn check-and-confirm [ch cf]
